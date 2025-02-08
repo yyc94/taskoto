@@ -1,0 +1,14 @@
+[package]
+name = "taskoto"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rusqlite = {version = "0.32.1", features = ["bundled"]}
+chrono = "0.4.38"
+tabled = "0.16.0"
+serde_derive = "1.0.217"
+serde_rusqlite = "0.36.0"
+serde = "1.0"
+clap = { version = "4.5.27", features = ["derive"] }
+ansi_term = "0.12.1"
