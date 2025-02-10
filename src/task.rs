@@ -51,15 +51,16 @@ pub mod task {
 
     #[derive(Deserialize, Serialize)]
     pub struct Task {
-        pub id: i32,
-        pub name: String,
+        id: i32,
+        name: String,
         pub status: TaskStatus,
-        pub due: Date, 
-        pub scheduled: Date, 
-        pub start_time: Date, 
-        pub end_time: Date, 
-        pub project: Option<String>, 
-        pub _is_started: bool,
+        due: Date, 
+        scheduled: Date, 
+        start_time: Date, 
+        end_time: Date, 
+        project: Option<String>, 
+        _is_started: bool,
+        _urgent: f32,
     }
 
     /* Methods for structs */
@@ -77,6 +78,7 @@ pub mod task {
                 end_time: None,
                 project: None,
                 _is_started: false,
+                _urgent: 1f32,
             }
         }
         fn set_id(&mut self, id: i32) {
@@ -165,6 +167,22 @@ pub mod task {
                 }
             }
         }
+        fn calc_urgent(&mut self) {
+            match self.status {
+                TaskStatus::Pending => {
+                    self._urgent = 1f32;
+                    if let Some(due) = &self.due {
+                        let deadline = NaiveDate::parse_from_str(due, DATE_FORMAT).unwrap();
+                        let now = Local::now().date_naive();
+                        let period = (deadline - now).num_days() as f32;
+                        self._urgent += 1f32 / (period + 1f32);
+                    }
+
+                },
+                TaskStatus::Completed => self._urgent = 0.5,
+                _ => self._urgent = 0f32,
+            }
+        }
 
         pub fn verify(&mut self) {
             let now = Local::now().date_naive();
@@ -187,6 +205,7 @@ pub mod task {
                 }
                 _ => {},
             }
+            self.calc_urgent();
         }
 
         pub fn get_state_word(&self) -> StateWord {
@@ -207,16 +226,7 @@ pub mod task {
         }
 
         fn is_urgent(&self) -> bool {
-            if self.status != TaskStatus::Pending {
-                return false;
-            }
-            let now = Local::now().date_naive();
-            if let Some(due) = &self.due {
-                let due = NaiveDate::parse_from_str(due, DATE_FORMAT).unwrap();
-                due - now <= TimeDelta::days(3)
-            } else {
-                false
-            }
+            self._urgent > 1.3
         }
 
         pub fn filtered(&self, filter: &Filter) -> bool {
@@ -345,8 +355,7 @@ pub mod task {
     }
 
     pub fn sort_tasks(tasks: &mut Vec<Task>) {
-        tasks.sort_unstable_by_key(|task|{
-            task.status.clone()
-        });
+        tasks.sort_unstable_by(|a, b| 
+            b._urgent.partial_cmp(&a._urgent).unwrap())
     }
 }

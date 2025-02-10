@@ -84,6 +84,7 @@ fn main() {
                 task.set_date(due, 0);
                 task.set_date(scheduled, 1);
                 task.set_project(project);
+                task.verify();
                 let _ = insert_task(&conn, &task);
                 res = String::from("Task Added.");
             },
@@ -129,6 +130,7 @@ fn main() {
                 if let Some(name) = name {
                     task.set_name(name);
                 }
+                task.verify();
                 let _ = update_task(&conn, &task).unwrap();
                 res = String::from("Task Modified");
             },

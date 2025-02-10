@@ -1,7 +1,3 @@
-// TODO: filter?
-// TESTING:
-// PERF: conn and disconn in operations automatically?
-
 /******************************************************************************
 * This module is the interfaces with database
 * The function "disconnect_to_db" should be called once after all interactions
@@ -40,7 +36,8 @@ pub mod database {
                     start_time TEXT,
                     end_time TEXT,
                     project TEXT,
-                    _is_started INTEGER NOT NULL)",
+                    _is_started INTEGER NOT NULL,
+                    _urgent REAL NOT NULL)",
             [],
         ).unwrap();
         Ok(())
@@ -50,11 +47,10 @@ pub mod database {
         conn.execute(
             "INSERT INTO tasks (
                 name, status, due, scheduled, start_time, end_time, 
-                project, _is_started) VALUES (
-                :name, :status, :due, :scheduled, :start_time, :end_time, :project, :_is_started)",
+                project, _is_started, _urgent) VALUES (
+                :name, :status, :due, :scheduled, :start_time, :end_time, :project, :_is_started, :_urgent)",
             to_params_named_with_fields(task, 
-                &["name", "status", "due", "scheduled", 
-                            "start_time", "end_time", "project", "_is_started"])
+                &["name", "status", "due", "scheduled", "start_time", "end_time", "project", "_is_started", "_urgent"])
                 .unwrap().to_slice().as_slice()
         ).unwrap();
         Ok(())
@@ -84,11 +80,11 @@ pub mod database {
          conn.execute(
             "UPDATE tasks SET name=:name, status=:status, due=:due,
                     scheduled=:scheduled, start_time=:start_time,
-                    end_time=:end_time, project=:project, _is_started=:_is_started
+                    end_time=:end_time, project=:project, _is_started=:_is_started, _urgent=:_urgent
                     WHERE id=:id",
             to_params_named_with_fields(task, 
                 &["name", "status", "due", "scheduled", "start_time",
-                            "end_time", "project", "_is_started", "id"]
+                            "end_time", "project", "_is_started", "_urgent", "id"]
             ).unwrap().to_slice().as_slice()
         ).unwrap();
         Ok(())
