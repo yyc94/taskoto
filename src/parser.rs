@@ -10,6 +10,9 @@ pub mod parser {
     }
     #[derive(Subcommand)]
     pub enum Command {
+        Config {
+            path: Option<String>,
+        },
         Init {},
         Add {
             name: String,
@@ -62,7 +65,7 @@ pub mod parser {
         Start {
             id: u8,
         },
-        End {
+        Stop {
             id: u8,
         },
         Clear {

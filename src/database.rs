@@ -14,11 +14,13 @@ pub mod database {
     use crate::task::task::Task;
     use serde_rusqlite::*;
 
-    const DATABASE_PATH: &str = "/home/fs002905/.taskoto/taskoto.db";
+    static mut DATABASE_PATH: &str = "/home/fs002905/.taskoto/taskoto.db";
 
     pub fn connect_to_db() -> Result<Connection> {
-        let conn = Connection::open(DATABASE_PATH)?;
-        Ok(conn)
+        unsafe {
+            let conn = Connection::open(DATABASE_PATH)?;
+            Ok(conn)
+        }
     }
 
     pub fn disconnect_to_db(conn: Connection) {
@@ -68,12 +70,20 @@ pub mod database {
         Ok(tasks)
     }    
 
-    pub fn fetch_task_by_index(conn: &Connection, id: i32) -> Result<Task> {
-        let mut stmt = conn.prepare("SELECT * FROM tasks WHERE id=?1")?;
-        let mut task = from_rows::<Task>(stmt.query([id]).unwrap());
-        let mut tmp = task.next().unwrap().unwrap();
-        tmp.verify();
-        Ok(tmp)
+    pub fn fetch_task_by_index(conn: &Connection, id: i32) -> Result<Task, ()> {
+        let mut stmt = conn.prepare("SELECT * FROM tasks WHERE id=?1").unwrap();
+        let mut rows = from_rows::<Task>(stmt.query([id]).unwrap());
+        match rows.next() {
+            Some(task) => {
+                let mut tmp = task.unwrap();
+                tmp.verify();
+                Ok(tmp)
+            },
+            None => Err(())
+        }
+        // let mut tmp = task.next().unwrap().unwrap();
+        // tmp.verify();
+        // Ok(tmp)
     }
 
     pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
@@ -90,10 +100,12 @@ pub mod database {
         Ok(())
     }
 
-    pub fn delete_task(conn: &Connection, id: i32) -> Result<()> {
+    pub fn delete_task(conn: &Connection, id: i32) -> Result<(), ()> {
         let mut stmt= conn.prepare("DELETE FROM tasks WHERE id=?1").unwrap();
-        stmt.execute([id]).unwrap();
-        Ok(())
+        match stmt.execute([id]) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(()),
+        }
     }
 
     pub fn delete_all(conn: &Connection) -> Result<()> {

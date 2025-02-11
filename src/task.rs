@@ -6,7 +6,7 @@ pub mod task {
     use serde_derive::{Serialize, Deserialize};
     use serde_rusqlite::*;
     use chrono::{
-        NaiveDate, Local, TimeDelta,
+        NaiveDate, Local, TimeDelta, Days, Datelike, Weekday,
     };
     use clap::ValueEnum;
 
@@ -47,6 +47,18 @@ pub mod task {
         Tomorrow,
     }
 
+    enum DateType {
+        Tomorrow,
+        Today,
+        Monday,
+        Tuesday,
+        Wednesday,
+        Thursday,
+        Friday,
+        Saturday,
+        Sunday,
+        RegularDate,
+    }
 
 
     #[derive(Deserialize, Serialize)]
@@ -112,7 +124,7 @@ pub mod task {
             }
         }
 
-        pub fn end(&mut self) {
+        pub fn stop(&mut self) {
             if self._is_started {
                 self._is_started = false;
                 let now = Local::now().date_naive().format(DATE_FORMAT).to_string();
@@ -132,40 +144,143 @@ pub mod task {
             self._is_started = false;
         }
 
-        pub fn set_date(&mut self, date: Date, date_type: u8) {
-            if let Some(p) = date {
-                match NaiveDate::parse_from_str(&p, DATE_FORMAT) {
-                    Ok(_) => {
-                        match date_type {
-                            0 => self.due = Some(p),
-                            1 => self.scheduled = Some(p),
-                            2 => self.start_time = Some(p),
-                            3 => self.end_time = Some(p),
-                            _ => {},
-                        }
+        pub fn set_date(&mut self, date: Date, date_type: u8){
+            let enum_to_u8 = |weekday: Weekday| -> u8 {
+                match weekday {
+                    Weekday::Mon => 1,
+                    Weekday::Tue => 2,
+                    Weekday::Wed => 3,
+                    Weekday::Thu => 4,
+                    Weekday::Fri => 5,
+                    Weekday::Sat => 6,
+                    Weekday::Sun => 7,
+                }
+            };
+            let calc_duration = |a: u8, b:u8| -> u8 {
+                if a < b {
+                    b - a
+                } else {
+                    7 - a + b
+                } 
+            };
+            let dds = if let Some(p) = date {
+                let now = Local::now().date_naive();
+                let weekday = enum_to_u8(now.weekday());
+                match p.to_lowercase().as_str() {
+                    "mon" | "monday" => {
+                        let dura = calc_duration(weekday, 1);
+                        Some(now
+                            .checked_add_days(Days::new(dura as u64))
+                            .unwrap()
+                            .format(DATE_FORMAT).to_string())
                     },
-                    // TODO: Execption
-                    Err(_) => {},
-
+                    "tue" | "tuesday" => {
+                        let dura = calc_duration(weekday, 2);
+                        Some(now
+                            .checked_add_days(Days::new(dura as u64))
+                            .unwrap()
+                            .format(DATE_FORMAT).to_string())
+                    },
+                    "wed" | "wednsday" => {
+                        let dura = calc_duration(weekday, 3);
+                        Some(now
+                            .checked_add_days(Days::new(dura as u64))
+                            .unwrap()
+                            .format(DATE_FORMAT).to_string())
+                    },
+                    "thu" | "thursday" => {
+                        let dura = calc_duration(weekday, 4);
+                        Some(now
+                            .checked_add_days(Days::new(dura as u64))
+                            .unwrap()
+                            .format(DATE_FORMAT).to_string())
+                    },
+                    "fri" | "friday" => {
+                        let dura = calc_duration(weekday, 5);
+                        Some(now
+                            .checked_add_days(Days::new(dura as u64))
+                            .unwrap()
+                            .format(DATE_FORMAT).to_string())
+                    },
+                    "sat" | "saturday" => {
+                        let dura = calc_duration(weekday, 6);
+                        Some(now
+                            .checked_add_days(Days::new(dura as u64))
+                            .unwrap()
+                            .format(DATE_FORMAT).to_string())
+                    },
+                    "sun" | "sunday" => {
+                        let dura = calc_duration(weekday, 7);
+                        Some(now
+                            .checked_add_days(Days::new(dura as u64))
+                            .unwrap()
+                            .format(DATE_FORMAT).to_string())
+                    },
+                    "now" | "today" => {
+                        Some(now
+                            .format(DATE_FORMAT).to_string())
+                    },
+                    "later" | "tomorrow" => {
+                        Some(now
+                            .checked_add_days(Days::new(1))
+                            .unwrap()
+                            .format(DATE_FORMAT).to_string())
+                    },
+                    _ => match NaiveDate::parse_from_str(&p, DATE_FORMAT) {
+                        Ok(_) => Some(p),
+                        Err(_) => None,
+                    },
                 }
             } else {
-                match date_type {
-                    0 => self.due = None,
-                    1 => self.scheduled = None,
-                    2 => {
-                        self.start_time = None;
-                        self._is_started = false;
-                    },
-                    3 => {
-                        self.end_time = None;
-                        self._is_started = match self.start_time {
-                            Some(_) => true,
-                            None => false,
-                        }
-                    },
-                    _ => {},
-                }
+                None
+            };
+            match date_type {
+                0 => self.due = dds,
+                1 => self.scheduled = dds,
+                2 => self.start_time = dds,
+                3 => self.end_time = dds,
+                _ => {}, 
             }
+            /*
+            if let Some(p) = date {
+            match date_string_to_enum(&p) {
+            WeekDay::Tomorrow => {
+            let mut now = Local::now().date_naive();
+            now.checked_add_days(Days::new(1)).unwrap();
+            }
+            }
+            match NaiveDate::parse_from_str(&p, DATE_FORMAT) {
+            Ok(_) => {
+            match date_type {
+            0 => self.due = Some(p),
+            1 => self.scheduled = Some(p),
+            2 => self.start_time = Some(p),
+            3 => self.end_time = Some(p),
+            _ => {},
+            }
+            },
+            Err(_) => {},
+
+            }
+            } else {
+            match date_type {
+            0 => self.due = None,
+            1 => self.scheduled = None,
+            2 => {
+            self.start_time = None;
+            self._is_started = false;
+            },
+            3 => {
+            self.end_time = None;
+            self._is_started = match self.start_time {
+            Some(_) => true,
+            None => false,
+            }
+            },
+            _ => {},
+            }
+            }
+            */
         }
         fn calc_urgent(&mut self) {
             match self.status {
@@ -176,6 +291,9 @@ pub mod task {
                         let now = Local::now().date_naive();
                         let period = (deadline - now).num_days() as f32;
                         self._urgent += 1f32 / (period + 1f32);
+                    }
+                    if self._is_started {
+                        self._urgent += 1.5;
                     }
 
                 },
@@ -226,7 +344,11 @@ pub mod task {
         }
 
         fn is_urgent(&self) -> bool {
-            self._urgent > 1.3
+            if self._is_started {
+                self._urgent > 2.8
+            } else {
+                self._urgent > 1.3
+            }
         }
 
         pub fn filtered(&self, filter: &Filter) -> bool {
@@ -317,7 +439,7 @@ pub mod task {
 
     // Tabled
     impl Tabled for Task {
-        const LENGTH: usize = 0;
+        const LENGTH: usize = 200;
         fn fields(&self) -> Vec<std::borrow::Cow<'_, str>> {
             let id = Cow::from(self.id.to_string());
             let name = Cow::from(self.name.clone());
@@ -332,11 +454,11 @@ pub mod task {
             // TODO: status can show in a shorter way
             let status = Cow::from(
                 match &self.status {
-                    TaskStatus::Pending => "Pending",
-                    TaskStatus::Canceled => "Canceled",
-                    TaskStatus::Completed => "Completed",
-                    TaskStatus::Expired => "Expired",
-                    TaskStatus::Failed => "Failed",
+                    TaskStatus::Pending => "P",
+                    TaskStatus::Canceled => "C",
+                    TaskStatus::Completed => "D",
+                    TaskStatus::Expired => "E",
+                    TaskStatus::Failed => "F",
                 }
             );
             vec![id, project, due, scheduled, name, status]
@@ -358,4 +480,5 @@ pub mod task {
         tasks.sort_unstable_by(|a, b| 
             b._urgent.partial_cmp(&a._urgent).unwrap())
     }
+
 }
