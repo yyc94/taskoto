@@ -2,6 +2,21 @@ pub mod parser {
     use clap::{Parser, Subcommand};
     use crate::task::task::Filter;
 
+    const DATE_TYPE_INSTRU: &str = 
+    "There are 11 types of date format.\nPlease use the format you specified when \'add\' or \'modify\' a task
+    Examples:
+        type-1 : 2025-12-31 
+        type-2 : 12-31-2025 
+        type-3 : 25-12-31 
+        type-4 : 12-31-25 
+        type-5 : December 31, 2025 
+        type-6 : December 31, 25 
+        type-7 : Dec 31, 2025 
+        type-8 : Dec 31, 25 
+        type-9 : 12-31 
+        type-10: December 31 
+        type-11: Dec 31";
+
     #[derive(Parser)]
     #[command(version, about, long_about = None)]
     pub struct Cli {
@@ -10,7 +25,7 @@ pub mod parser {
     }
     #[derive(Subcommand)]
     pub enum Command {
-        #[command(about = "Modify the configuration of the taskoto")]
+        #[command(about = "Modify the configuration of the taskoto", long_about = DATE_TYPE_INSTRU)]
         Config {
             #[arg(short, long)]
             path: Option<String>,
