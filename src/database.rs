@@ -13,14 +13,14 @@ pub mod database {
     use rusqlite::{Connection, Result};
     use crate::task::task::Task;
     use serde_rusqlite::*;
+    use crate::*;
 
-    static mut DATABASE_PATH: &str = "/home/fs002905/.taskoto/taskoto.db";
+    // const DATABASE_PATH: &str = "/home/fs002905/.taskoto/taskoto.db";
+
 
     pub fn connect_to_db() -> Result<Connection> {
-        unsafe {
-            let conn = Connection::open(DATABASE_PATH)?;
-            Ok(conn)
-        }
+        let conn = Connection::open(&get_database_dir())?;
+        Ok(conn)
     }
 
     pub fn disconnect_to_db(conn: Connection) {
@@ -114,4 +114,5 @@ pub mod database {
         stmt.execute([]).unwrap();
         Ok(())
     }
+
 }

@@ -1,6 +1,6 @@
 [package]
 name = "taskoto"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 
 [dependencies]
@@ -12,4 +12,5 @@ serde_rusqlite = "0.36.0"
 serde = "1.0"
 clap = { version = "4.5.27", features = ["derive"] }
 ansi_term = "0.12.1"
-serde_json = "1.0.138"
+toml = "0.8.20"
+lazy_static = "1.5.0"
