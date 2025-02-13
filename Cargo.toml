@@ -1,6 +1,6 @@
 [package]
 name = "taskoto"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 
 [dependencies]
@@ -14,3 +14,4 @@ clap = { version = "4.5.27", features = ["derive"] }
 ansi_term = "0.12.1"
 toml = "0.8.20"
 lazy_static = "1.5.0"
+git2 = "0.20.0"

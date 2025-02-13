@@ -25,15 +25,35 @@ pub mod parser {
     }
     #[derive(Subcommand)]
     pub enum Command {
-        #[command(about = "Modify the configuration of the taskoto", long_about = DATE_TYPE_INSTRU)]
+        #[command(
+            about = "Modify the configuration of the taskoto", 
+            long_about = DATE_TYPE_INSTRU
+        )]
         Config {
+            
+            #[arg(short, long)]
+            user_name: Option<String>,
+
+            #[arg(short, long)]
+            email: Option<String>,
+
             #[arg(short, long)]
             path: Option<String>,
 
             #[arg(short, long)]
             date_format: Option<usize>,
 
+            #[arg(long)]
+            sync: Option<bool>,
+
+            #[arg(short, long)]
+            sync_url: Option<String>,
+
             //...
+        },
+        #[command(about = "Show the configuration.")]
+        ShowConfig {
+
         },
         #[command(about = "Initialize the database at the specify location")]
         Init {},

@@ -8,6 +8,7 @@ mod taskoto;
 mod task;
 mod database;
 mod parser;
+mod sync;
 
 use serde_derive::{Serialize, Deserialize};
 use taskoto::taskoto::taskoto_run;
@@ -17,7 +18,6 @@ use std::{
     fs::{self, File},
     io::Write,
 };
-
 
 pub const CONFIG_DIR: &str = "/home/fs002905/.taskotorc";
 
@@ -33,24 +33,26 @@ lazy_static! {
     pub static ref CONFIG: Mutex<Config> = Mutex::new(Config::init(CONFIG_DIR));
 }
 
-pub fn get_database_dir() -> String {
-    CONFIG.lock().unwrap().path.clone()
-}
-pub fn get_date_format() -> usize {
-    CONFIG.lock().unwrap().date_format
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
+    user_name: String,
+    email: String,
     path: String,
     date_format: usize,
+    sync: bool,
+    sync_url: String,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
+            user_name: String::from("default"),
+            email: String::from("default@default.com"),
             path: String::from("/home/fs002905/.taskoto/taskoto.db"),
             date_format: 1, 
+            sync: false,
+            sync_url: String::from("0.0.0.0"),
         }
     }
 }
@@ -77,6 +79,28 @@ impl Config {
         config
     }
 }
+
+
+/*CONFIG parameters*/
+pub fn get_database_dir() -> String {
+    CONFIG.lock().unwrap().path.clone()
+}
+pub fn get_date_format() -> usize {
+    CONFIG.lock().unwrap().date_format
+}
+pub fn is_sync() -> bool {
+    CONFIG.lock().unwrap().sync
+}
+pub fn get_sync_url() -> String {
+    CONFIG.lock().unwrap().sync_url.clone()
+}
+pub fn get_user_name() -> String {
+    CONFIG.lock().unwrap().user_name.clone()
+}
+pub fn get_email() -> String {
+    CONFIG.lock().unwrap().email.clone()
+}
+
 
 fn main() {
     taskoto_run();
