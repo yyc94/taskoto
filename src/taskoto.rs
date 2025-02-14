@@ -126,6 +126,14 @@ pub mod taskoto {
                 Command::Clear {  } => {
                     command_clear(&conn)
                 },
+                Command::SyncPush {  } => {
+                    sync_push();
+                    String::from("Sync Done.")
+                },
+                Command::SyncPull {  } => {
+                    sync_pull();
+                    String::from("Sync Done.")
+                }
                 Command::Info {  } => {
                     String::from("I have too much to say, but I can't fit a line.")
                 }
@@ -185,7 +193,7 @@ pub mod taskoto {
     fn command_init(conn: &Connection) -> String {
         let _ = create_table(&conn);
         if is_sync() {
-            let _ = init_repo();
+            init_repo();
         }
         String::from("Database Initialized.")
     }

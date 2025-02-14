@@ -124,6 +124,14 @@ pub mod parser {
         Clear {
 
         },
+        #[command(about = "Push the database to git")]
+        SyncPush {
+
+        },
+        #[command(about = "Pull the database from git")]
+        SyncPull {
+
+        },
         #[command(about = "Show some blahblahblah from the author aka me")]
         Info {
 
