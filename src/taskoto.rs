@@ -10,7 +10,6 @@ pub mod taskoto {
     use crate::database::database::*;
     use rusqlite::Connection;
     use crate::*;
-    use crate::sync::sync::*;
 
     fn set_style(s: &str, state: StateWord, flag: bool) {
         let color = if state & 1 != 0 {
@@ -69,17 +68,13 @@ pub mod taskoto {
         if let Some(command) = args.command {
             res = match command {
                 Command::Config {
-                    user_name, 
-                    email, 
                     path,
                     date_format,
-                    sync,
-                    sync_url
                 } => {
-                    command_config(user_name, email, path, date_format, sync, sync_url)
+                    command_config(path, date_format)
                 },
                 Command::ShowConfig {  } => {
-                    "hh".to_string()
+                    command_show_config()
                 },
                 Command::Init{  } => {
                     command_init(&conn)
@@ -139,12 +134,8 @@ pub mod taskoto {
     }
 
     fn command_config(
-        user_name: Option<String>,
-        email: Option<String>,
         path: Option<String>, 
         date_format: Option<usize>,
-        sync: Option<bool>,
-        sync_url: Option<String>,
         ) -> String {
         let mut modified_flag = false;
         let mut config = CONFIG.lock().unwrap();
@@ -158,22 +149,6 @@ pub mod taskoto {
                     modified_flag = true;
                 } 
         }
-        if let Some(u) = user_name {
-            config.user_name = u.clone();
-            modified_flag = true;
-        }
-        if let Some(e) = email {
-            config.email = e.clone();
-            modified_flag = true;
-        }
-        if let Some(sync) = sync {
-            config.sync = sync;
-            modified_flag = true;
-        }
-        if let Some(s) = sync_url {
-            config.sync_url = s.clone();
-            modified_flag = true;
-        }
         if modified_flag {
             config.config_write();
             String::from("Configuration Done.")
@@ -184,9 +159,6 @@ pub mod taskoto {
 
     fn command_init(conn: &Connection) -> String {
         let _ = create_table(&conn);
-        if is_sync() {
-            let _ = init_repo();
-        }
         String::from("Database Initialized.")
     }
 
@@ -352,6 +324,19 @@ pub mod taskoto {
         }
         let _ = update_task(&conn, &task).unwrap();
         res
+    }
+
+    fn command_show_config() -> String {
+        println!("Database directory: {}", &get_database_dir());
+        let date_type = get_date_format();
+        let date_format = if date_type <= 8 {
+            VALID_FORMAT_WITH_Y[date_type - 1]
+        } else {
+            VALID_FORMAT_NO_Y[date_type - 9]
+        };
+        println!("Date format: {}", date_format);
+        format!("You can change the configuration in {}, or use the config command.", CONFIG_DIR)
+        // String::from("You can change the configuration in {}", CONFIG_DIR)
     }
 
 }
