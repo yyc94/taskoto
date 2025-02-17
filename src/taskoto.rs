@@ -335,7 +335,7 @@ pub mod taskoto {
             VALID_FORMAT_NO_Y[date_type - 9]
         };
         println!("Date format: {}", date_format);
-        format!("You can change the configuration in {}, or use the config command.", CONFIG_DIR)
+        format!("You can change the configuration in {}, or use the config command.", &get_config_dir())
         // String::from("You can change the configuration in {}", CONFIG_DIR)
     }
 

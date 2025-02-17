@@ -1,8 +1,5 @@
-// TODO: implement function sync
 // TODO: find a way to define "Project"
 // TODO: exceptions handling
-// TODO: configuration file
-// FIX: date_format error
 
 mod taskoto;
 mod task;
@@ -10,7 +7,7 @@ mod database;
 mod parser;
 
 use serde_derive::{Serialize, Deserialize};
-use taskoto::taskoto::taskoto_run;
+use home;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 use std::{
@@ -18,8 +15,8 @@ use std::{
     io::Write,
 };
 
-
-pub const CONFIG_DIR: &str = "/home/fs002905/.taskotorc";
+// pub const CONFIG_DIR: &str = "/home/fs002905/.taskotorc";
+pub const CONFIG_NAME: &str = "/.taskotorc";
 
 pub const VALID_FORMAT_WITH_Y: [&str; 8] = [
     "%Y-%m-%d", "%m-%d-%Y", "%y-%m-%d", "%m-%d-%y",
@@ -30,7 +27,10 @@ pub const VALID_FORMAT_NO_Y: [&str; 3] = [
 ]; 
 
 lazy_static! {
-    pub static ref CONFIG: Mutex<Config> = Mutex::new(Config::init(CONFIG_DIR));
+    // pub static ref CONFIG: Mutex<Config> = Mutex::new(Config::init(CONFIG_DIR));
+    pub static ref CONFIG: Mutex<Config> = Mutex::new(Config::init(
+        &get_config_dir()
+    ));
 }
 
 
@@ -44,7 +44,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            path: String::from(CONFIG_DIR),
+            path: String::from(&get_config_dir()),
             date_format: 1, 
         }
     }
@@ -62,7 +62,7 @@ impl Config {
     }
     fn config_write(&self) {
         let toml_string = toml::to_string(&self).unwrap();
-        let mut file = File::create(CONFIG_DIR).unwrap();
+        let mut file = File::create(&get_config_dir()).unwrap();
         file.write_all(toml_string.as_bytes()).unwrap();
     }
 
@@ -81,7 +81,10 @@ pub fn get_database_dir() -> String {
 pub fn get_date_format() -> usize {
     CONFIG.lock().unwrap().date_format
 }
+pub fn get_config_dir() -> String {
+    String::from(home::home_dir().unwrap().to_string_lossy()) + CONFIG_NAME
+}
 
 fn main() {
-    taskoto_run();
+    taskoto::taskoto::taskoto_run();
 }
