@@ -75,16 +75,22 @@ impl Config {
 }
 
 
-/*CONFIG parameters*/
+// CONFIG parameters
+pub fn get_config_dir() -> String {
+    String::from(home::home_dir().unwrap().to_string_lossy()) + CONFIG_NAME
+}
 pub fn get_database_dir() -> String {
     CONFIG.lock().unwrap().path.clone()
 }
 pub fn get_date_format() -> usize {
     CONFIG.lock().unwrap().date_format
 }
-pub fn get_config_dir() -> String {
-    String::from(home::home_dir().unwrap().to_string_lossy()) + CONFIG_NAME
+
+// Meaningless function only used for git test
+pub fn what_the_fuck() -> String {
+    String::from("What the fuck!")
 }
+
 
 fn main() {
     taskoto::taskoto::taskoto_run();
