@@ -67,14 +67,14 @@ pub mod task {
 
     #[derive(Deserialize, Serialize)]
     pub struct Task {
-        id: i32,
+        pub id: i32,
         name: String,
         pub status: TaskStatus,
         due: Date, 
         scheduled: Date, 
         start_time: Date, 
         end_time: Date, 
-        project_id: Option<i32>,
+        pub project_id: Option<i32>,
         project: Option<String>, 
         _is_started: bool,
         _urgent: f32,

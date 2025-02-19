@@ -59,17 +59,26 @@ pub mod parser {
             project_id: Option<i32>,
 
         },
+        AddProject {
+            name: String,
+
+            #[arg(short, long)]
+            deadline: Option<String>,
+
+            #[arg(long)]
+            description: Option<String>, 
+        },
+
         #[group(multiple = false)]
         #[command(about = "Show the task (id) or all pending tasks")]
         Show {
             id: Option<u8>,
-            // TODO: filter not implement
             #[arg(short, long, value_enum)]
             filter: Option<Filter>,
-        },
-        #[command(about = "Show all tasks")]
-        ShowAll {
-
+            #[arg(short, long)]
+            project: bool,
+            #[arg(short, long)]
+            all: bool,
         },
         #[command(about = "Modify the task (id)")]
         Modify {
@@ -88,17 +97,48 @@ pub mod parser {
             project_id: Option<i32>,
 
         },
+
+        #[command(about = "Modify the project (id)")]
+        ModifyProject {
+            id: u8,
+
+            #[arg(short, long)]
+            name: Option<String>,
+            
+            #[arg(short, long)]
+            deadline: Option<String>,
+
+            #[arg(long)]
+            description: Option<String>,
+        },
+
         #[command(about = "Change the status of the task (id) to CANCELED")]
         Delete {
             id: u8,
+
+            #[arg(short, long)]
+            project: bool,
         },
+
         #[command(about = "Delete the task (id) from the database (CAN NOT BE RECOVERED)")]
         Destroy {
             id: u8,
+
+            #[arg(short, long)]
+            project: bool,
+
+        },
+        #[command(about = "Delete all tasks or projects from the database (CAN NOT BE RECOVERED)")]
+        Clear {
+            #[arg(short, long)]
+            project: bool,
         },
         #[command(about = "Change the status of the task (id) to COMPLETED")]
         Done {
             id: u8,
+
+            #[arg(short, long)]
+            project: bool,
         },
         #[command(about = "start the task (id)")]
         Start {
@@ -107,10 +147,6 @@ pub mod parser {
         #[command(about = "stop the task (id)")]
         Stop {
             id: u8,
-        },
-        #[command(about = "Delete all tasks from the database (CAN NOT BE RECORVERED)")]
-        Clear {
-
         },
         #[command(about = "Show some blahblahblah from the author aka me")]
         Info {

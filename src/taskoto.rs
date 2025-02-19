@@ -6,6 +6,7 @@ pub mod taskoto {
     use std::io;
 
     use crate::task::task::{self, Task, StateWord, TaskStatus, Filter};
+    use crate::project::project::Project;
     use crate::parser::parser::{Cli, Command}; 
     use crate::database::database::*;
     use rusqlite::Connection;
@@ -86,8 +87,17 @@ pub mod taskoto {
                     project_id } => {
                     command_add(&conn, name, due, scheduled, project_id)
                 },
-                Command::Show { id, filter } => {
-                    command_show(&conn, id, filter, &mut state_words)
+                Command::AddProject { name, deadline, description } => {
+                    command_add_project(&conn, name, deadline, description)
+                },
+                Command::Show { id, filter , project, all} => {
+                    if project {
+                        command_show_projects(&conn)
+                    } else if !all {
+                        command_show(&conn, id, filter, &mut state_words)
+                    } else {
+                        command_show_all(&conn, &mut state_words)
+                    }
                 },
                 Command::Modify {
                     id, 
@@ -98,20 +108,29 @@ pub mod taskoto {
                     command_modify(&conn, id, name, due, scheduled, project_id)        
                     // let mut task = fetch_task_by_index(&conn, id as i32).unwrap();
                 },
-                Command::Delete { id } => {
-                    command_change(&conn, id, 0)
-                },
-                Command::Destroy { id } => {
-                    match delete_task(&conn, id as i32) {
-                        Ok(_) => String::from("Task Destroyed."),
-                        Err(_) => String::from("No Matches."),
+                Command::Delete { id , project} => {
+                    if project {
+                        command_delele_project(&conn, id)
+                    } else {
+                        command_change(&conn, id, 0)
                     }
                 },
-                Command::ShowAll {  } => {
-                    command_show_all(&conn, &mut state_words)
-                }
-                Command::Done { id } => {
-                    command_change(&conn, id, 1)
+                Command::Destroy { id , project} => {
+                    if project {
+                        command_destroy_project(&conn, id)
+                    } else {
+                        match delete_task(&conn, id as i32) {
+                            Ok(_) => String::from("Task Destroyed."),
+                            Err(_) => String::from("No Matches."),
+                        }
+                    } 
+                },
+                Command::Done { id , project} => {
+                    if project {
+                        command_complete_project(&conn, id)
+                    } else {
+                        command_change(&conn, id, 1)
+                    }
                 },
                 Command::Start { id } => {
                     command_change(&conn, id, 2)
@@ -119,12 +138,20 @@ pub mod taskoto {
                 Command::Stop { id } => {
                     command_change(&conn, id, 3)
                 },
-                Command::Clear {  } => {
-                    command_clear(&conn)
-                },
                 Command::Info {  } => {
                     String::from("I have too much to say, but I can't fit a line.")
-                }
+                },
+                Command::ModifyProject { 
+                    id, 
+                    name, 
+                    deadline, 
+                    description } => {
+                    command_modify_project(
+                        &conn, id, name, deadline, description)
+                },
+                Command::Clear { project } => {
+                        command_clear(&conn, project)
+                },
             }
         } else {
             res = command_show(&conn,None, None, &mut state_words);
@@ -137,18 +164,18 @@ pub mod taskoto {
     fn command_config(
         path: Option<String>, 
         date_format: Option<usize>,
-        ) -> String {
+    ) -> String {
         let mut modified_flag = false;
         let mut config = CONFIG.lock().unwrap();
         if let Some(p) = path {
-                config.path = p.clone();
-                modified_flag = true;
+            config.path = p.clone();
+            modified_flag = true;
         }
         if let Some(f) = date_format {
-                if f > 0 && f <= 11 { 
-                    config.date_format= f;
-                    modified_flag = true;
-                } 
+            if f > 0 && f <= 11 { 
+                config.date_format= f;
+                modified_flag = true;
+            } 
         }
         if modified_flag {
             config.config_write();
@@ -170,7 +197,7 @@ pub mod taskoto {
         let pro = if let Some(id) = project_id {
             Some(fetch_project_by_index(conn, id).unwrap())
         } else {
-                None
+            None
         }; 
         task.set_name(name);
         task.set_date(due, 0);
@@ -181,7 +208,18 @@ pub mod taskoto {
         String::from("Task Added.")
     }
 
-    fn command_show(conn: &Connection, id: Option<u8>, filter: Option<Filter>, state_words: &mut Vec<StateWord>) -> String {
+    fn command_add_project(conn: &Connection, name: String, 
+        deadline: Option<String>, description: Option<String>) -> String {
+        let mut pro = Project::new();
+        pro.set_name(name);
+        pro.set_deadline(deadline);
+        pro.set_description(description);
+        let _ = insert_project(&conn, &pro);
+        String::from("Project Added.")
+    }
+
+    fn command_show(conn: &Connection, id: Option<u8>, 
+        filter: Option<Filter>, state_words: &mut Vec<StateWord>) -> String {
         if let Some(id) = id {
             // let task = fetch_task_by_index(&conn, id as i32).unwrap();
             match fetch_task_by_index(&conn, id as i32) {
@@ -225,6 +263,7 @@ pub mod taskoto {
             }
         }
     }
+
     fn command_show_all(conn: &Connection, state_words: &mut Vec<StateWord>) -> String {
         let mut tasks = fetch_task(&conn).unwrap();
         if tasks.is_empty() {
@@ -241,14 +280,30 @@ pub mod taskoto {
 
     }
 
+    fn command_show_projects(conn: &Connection ) -> String {
+        let pros= fetch_project(&conn).unwrap();
+        if pros.is_empty() {
+            String::from("No Match.")
+        } else {
+            Table::new(&pros)
+                .with(Style::empty())
+                .to_string()
+        }
 
-    fn command_clear(conn: &Connection) -> String {
+    }
+
+
+    fn command_clear(conn: &Connection, project: bool) -> String {
         println!("WARNING! The operation will clear all data in database! (Y/N)?");
         let mut make_sure = String::new();
         match io::stdin().read_line(&mut make_sure) {
             Ok(_) => {
                 if make_sure.chars().nth(0).unwrap() == 'Y' {
-                    let _ = delete_all(&conn);
+                    let _ = if !project{
+                        delete_all(&conn)
+                    } else {
+                        delete_all_projects(&conn)
+                    }; 
                     String::from("Database Cleared.")
                 } else {
                     String::from("Operation Canceled.")
@@ -257,6 +312,38 @@ pub mod taskoto {
             Err(_) => {
                 String::from("Operation Canceled.")
             },
+        }
+    }
+
+    fn command_modify_project(
+        conn: &Connection, id: u8, 
+        name:Option<String>, 
+        deadline: Option<String>, 
+        description: Option<String>
+    ) -> String {
+        match fetch_project_by_index(&conn, id as i32) {
+            Ok(mut pro) => {
+                if let Some(name) = name {
+                    pro.set_name(name);
+                }
+                if let Some(deadline) = deadline {
+                    if deadline == "" {
+                        pro.set_deadline(None);
+                    } else {
+                        pro.set_deadline(Some(deadline));
+                    }
+                }
+                if let Some(contents) = description {
+                    if contents == "" {
+                        pro.set_description(None);
+                    } else {
+                        pro.set_description(Some(contents));
+                    }
+                }
+                let _ = update_project(conn, &pro).unwrap();
+                String::from("Project Modified.")
+            },
+            Err(_) => String::from("No Matches.")
         }
     }
 
@@ -341,5 +428,56 @@ pub mod taskoto {
         println!("Date format: {}", date_format);
         format!("You can change the configuration in {}, or use the config command.", &get_config_dir())
         // String::from("You can change the configuration in {}", CONFIG_DIR)
+    }
+
+    fn command_delele_project(conn: &Connection, id: u8) -> String {
+        let mut tasks = fetch_task(conn).unwrap();
+        tasks.iter_mut().for_each(|task| {
+            if let Some(pro_id) = task.project_id {
+                if pro_id == id as i32 {
+                    task.set_project(None);
+                    let _ = update_task(&conn, &task);
+                }
+            }
+        });
+        match delete_project(conn, id as i32) {
+            Ok(_) => String::from("Project Deleted"),
+            Err(_) => String::from("No Matches."),
+        }
+
+    }
+
+    fn command_complete_project(conn: &Connection, id: u8) -> String {
+        let mut tasks = fetch_task(conn).unwrap();
+        tasks.iter_mut().for_each(|task| {
+            if let Some(pro_id) = task.project_id {
+                if pro_id == id as i32 {
+                    let _ = command_change(&conn, task.id as u8, 1);
+                } 
+            }
+        });
+        match fetch_project_by_index(conn, id as i32) {
+            Ok(mut pro) => {
+                pro.project_done();
+                String::from("Project Done.")
+            },
+            Err(_) => String::from("No Matches.")
+        }
+    }
+
+    fn command_destroy_project(conn: &Connection, id: u8) -> String {
+        let mut tasks = fetch_task(conn).unwrap();
+        tasks.iter_mut().for_each(|task| {
+            if let Some(pro_id) = task.project_id {
+                if pro_id == id as i32 {
+                    let _ = delete_task(&conn, task.id);
+                } 
+            }
+        });
+        match delete_project(conn, id as i32) {
+            Ok(_) => String::from("Project Destroyed."),
+            Err(_) => String::from("No Matches."),
+        }
+
     }
 }

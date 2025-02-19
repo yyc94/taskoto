@@ -10,7 +10,6 @@ pub mod project {
     pub struct Project {
         pub id: i32,
         pub name: String,
-        _progress: i32,
         deadline: Option<String>,
         description: Option<String>,
         is_done: bool,
@@ -21,7 +20,6 @@ pub mod project {
             Self {
                 id: 1,
                 name: String::from("Default Project"),
-                _progress: 0,
                 deadline: None,
                 description: None,
                 is_done: false,
@@ -44,18 +42,18 @@ pub mod project {
                     }
                     match NaiveDate::parse_from_str(&input, &fmt) {
                         Ok(nd) => self.deadline = Some(nd.format(DATE_FORMAT).to_string()),
-                        Err(_) => {}
+                        Err(_) => {println!("NNNNNNN");}
                     }
                 }, 
                 None => self.deadline = None,
             }
         }
 
-        pub fn set_description(&mut self, contents: String) {
-            self.description = Some(contents);
+        pub fn set_description(&mut self, contents: Option<String>) {
+            self.description = contents;
         }
 
-        fn project_done(&mut self) {
+        pub fn project_done(&mut self) {
             self.is_done = true;
         }
     }
@@ -66,8 +64,12 @@ pub mod project {
             let name = Cow::from(self.name.clone());
             let deadline = Cow::from(
                 match &self.deadline {
-                    Some(d) => d,
-                    None => "-",
+                    Some(d) => {
+                        let n = NaiveDate::parse_from_str(&d, DATE_FORMAT).unwrap();
+                        let (_, fmt) = get_date_format();
+                        n.format(&fmt).to_string()
+                    },
+                    None => "-".to_string(),
                 });
             vec![id, name, deadline]
         }

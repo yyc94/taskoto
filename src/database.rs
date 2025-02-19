@@ -51,7 +51,6 @@ pub mod database {
             "CREATE TABLE IF NOT EXISTS projects(
                     id INTEGER PRIMARY KEY, 
                     name TEXT NOT NULL, 
-                    _progress INTEGER NOT NULL,
                     deadline TEXT,
                     description TEXT,
                     is_done INTEGER NOT NULL)",
@@ -79,10 +78,10 @@ pub mod database {
     pub fn insert_project(conn: &Connection, project: &Project) -> Result<()> {
         conn.execute(
             "INSERT INTO projects(
-                name, _progress, deadline, description, is_done) VALUES ( 
-                :name, :_progress, :deadline, :description, :is_done)",
+                name, deadline, description, is_done) VALUES ( 
+                :name, :deadline, :description, :is_done)",
             to_params_named_with_fields(project, 
-                &["name", "_progress", "deadline", "description", "is_done"])
+                &["name", "deadline", "description", "is_done"])
                 .unwrap().to_slice().as_slice()
         ).unwrap();
         Ok(())
@@ -150,11 +149,11 @@ pub mod database {
     
     pub fn update_project(conn: &Connection, project: &Project) -> Result<()> {
          conn.execute(
-            "UPDATE projects SET name=:name, _progress=:_progress, deadline=:deadline,
+            "UPDATE projects SET name=:name, deadline=:deadline,
                     description=:description, is_done=:is_done
                     WHERE id=:id",
             to_params_named_with_fields(project, 
-                &["name", "_progress", "deadline", "description", "is_done"]
+                &["name", "deadline", "description", "is_done", "id"]
             ).unwrap().to_slice().as_slice()
         ).unwrap();
         Ok(())
@@ -182,7 +181,7 @@ pub mod database {
         Ok(())
     }
 
-    pub fn delete_all_tasks(conn: &Connection) -> Result<()> {
+    pub fn delete_all_projects(conn: &Connection) -> Result<()> {
         let mut stmt= conn.prepare("DELETE FROM projects").unwrap();
         stmt.execute([]).unwrap();
         Ok(())
