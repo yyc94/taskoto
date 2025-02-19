@@ -1,10 +1,15 @@
 #[allow(dead_code)]
 pub mod project {
+    use std::borrow::Cow;
     use chrono::{NaiveDate, Local, Datelike};
+    use tabled::Tabled;
     use crate::*;
+
+
+    #[derive(Deserialize, Serialize)]
     pub struct Project {
-        id: i32,
-        name: String,
+        pub id: i32,
+        pub name: String,
         _progress: i32,
         deadline: Option<String>,
         description: Option<String>,
@@ -24,7 +29,7 @@ pub mod project {
         }
 
         pub fn set_name(&mut self, name: String) {
-           self.name = name; 
+            self.name = name; 
         }
 
         pub fn set_deadline(&mut self, date: Option<String>) {
@@ -54,4 +59,25 @@ pub mod project {
             self.is_done = true;
         }
     }
+    impl Tabled for Project{
+        const LENGTH: usize = 200;
+        fn fields(&self) -> Vec<std::borrow::Cow<'_, str>> {
+            let id = Cow::from(self.id.to_string());
+            let name = Cow::from(self.name.clone());
+            let deadline = Cow::from(
+                match &self.deadline {
+                    Some(d) => d,
+                    None => "-",
+                });
+            vec![id, name, deadline]
+        }
+        fn headers() -> Vec<std::borrow::Cow<'static, str>> {
+            vec![
+                Cow::from("ID"),
+                Cow::from("Project"),
+                Cow::from("D"),
+            ]
+        }
+    }
+
 }

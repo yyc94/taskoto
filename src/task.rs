@@ -11,6 +11,7 @@ pub mod task {
     use clap::ValueEnum;
 
     use crate::*;
+    use crate::project::project::Project;
 
     const STORE_PATH: &str = "~/.taskoto/task";
 
@@ -73,6 +74,7 @@ pub mod task {
         scheduled: Date, 
         start_time: Date, 
         end_time: Date, 
+        project_id: Option<i32>,
         project: Option<String>, 
         _is_started: bool,
         _urgent: f32,
@@ -91,6 +93,7 @@ pub mod task {
                 scheduled: None,
                 start_time: None,
                 end_time: None,
+                project_id: None,
                 project: None,
                 _is_started: false,
                 _urgent: 1f32,
@@ -116,8 +119,14 @@ pub mod task {
             };
         }
 
-        pub fn set_project(&mut self, project: Option<String>) {
-            self.project = project;
+        pub fn set_project(&mut self, project: Option<Project>) {
+            if let Some(pro) = project {
+                self.project_id = Some(pro.id);
+                self.project = Some(pro.name);
+            } else {
+                self.project_id = None;
+                self.project= None;
+            }
         }
 
         pub fn start(&mut self) {
@@ -463,9 +472,10 @@ pub mod task {
             let due = Cow::from(get_date(&self.due));
             let scheduled = Cow::from(get_date(&self.scheduled));
             let project = Cow::from(
-                match &self.project {
-                    Some(p) => p.clone(),
-                    None => " - ".to_string(),
+                if let Some(id) = self.project_id {
+                    self.project.clone().unwrap() + "(" + &id.to_string() + ")"
+                } else {
+                    "-".to_string()
                 }
             );
             // TODO: status can show in a shorter way

@@ -56,7 +56,7 @@ pub mod parser {
             scheduled: Option<String>,
             
             #[arg(short, long)]
-            project: Option<String>,
+            project_id: Option<i32>,
 
         },
         #[group(multiple = false)]
@@ -85,7 +85,7 @@ pub mod parser {
             scheduled: Option<String>,
             
             #[arg(short, long)]
-            project: Option<String>,
+            project_id: Option<i32>,
 
         },
         #[command(about = "Change the status of the task (id) to CANCELED")]

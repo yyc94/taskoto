@@ -83,8 +83,8 @@ pub mod taskoto {
                     name, 
                     due, 
                     scheduled, 
-                    project } => {
-                    command_add(&conn, name, due, scheduled, project)
+                    project_id } => {
+                    command_add(&conn, name, due, scheduled, project_id)
                 },
                 Command::Show { id, filter } => {
                     command_show(&conn, id, filter, &mut state_words)
@@ -94,8 +94,9 @@ pub mod taskoto {
                     name,
                     due,
                     scheduled, 
-                    project } => {
-                    command_modify(&conn, id, name, due, scheduled, project)        // let mut task = fetch_task_by_index(&conn, id as i32).unwrap();
+                    project_id } => {
+                    command_modify(&conn, id, name, due, scheduled, project_id)        
+                    // let mut task = fetch_task_by_index(&conn, id as i32).unwrap();
                 },
                 Command::Delete { id } => {
                     command_change(&conn, id, 0)
@@ -159,16 +160,22 @@ pub mod taskoto {
 
     fn command_init(conn: &Connection) -> String {
         let _ = create_table(&conn);
+        let _ = create_project_table(&conn);
         String::from("Database Initialized.")
     }
 
     fn command_add(conn: &Connection, name: String, due: Option<String>, 
-        scheduled: Option<String>, project: Option<String>) -> String {
+        scheduled: Option<String>, project_id: Option<i32>) -> String {
         let mut task = Task::new();
+        let pro = if let Some(id) = project_id {
+            Some(fetch_project_by_index(conn, id).unwrap())
+        } else {
+                None
+        }; 
         task.set_name(name);
         task.set_date(due, 0);
         task.set_date(scheduled, 1);
-        task.set_project(project);
+        task.set_project(pro);
         task.verify();
         let _ = insert_task(&conn, &task);
         String::from("Task Added.")
@@ -256,15 +263,16 @@ pub mod taskoto {
     fn command_modify(
         conn: &Connection,
         id: u8, name:Option<String>,  due: Option<String>, 
-        scheduled: Option<String>, project: Option<String>
+        scheduled: Option<String>, project_id: Option<i32>
     ) -> String {
         match fetch_task_by_index(&conn, id as i32) {
             Ok(mut task) => {
-                if let Some(project) = project {
-                    if project == "" {
+                if let Some(id) = project_id {
+                    if id == 0 {
                         task.set_project(None);
                     } else {
-                        task.set_project(Some(project));
+                        let pro = fetch_project_by_index(conn, id).unwrap();
+                        task.set_project(Some(pro));
                     }
                 }
                 if let Some(due) = due {
@@ -334,5 +342,4 @@ pub mod taskoto {
         format!("You can change the configuration in {}, or use the config command.", &get_config_dir())
         // String::from("You can change the configuration in {}", CONFIG_DIR)
     }
-
 }

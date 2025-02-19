@@ -12,6 +12,7 @@
 pub mod database {
     use rusqlite::{Connection, Result};
     use crate::task::task::Task;
+    use crate::project::project::Project;
     use serde_rusqlite::*;
     use crate::*;
 
@@ -36,6 +37,7 @@ pub mod database {
                     scheduled TEXT,
                     start_time TEXT,
                     end_time TEXT,
+                    project_id, INTEGER,
                     project TEXT,
                     _is_started INTEGER NOT NULL,
                     _urgent REAL NOT NULL)",
@@ -44,14 +46,43 @@ pub mod database {
         Ok(())
     }
 
+    pub fn create_project_table(conn: &Connection) -> Result<()> {
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS projects(
+                    id INTEGER PRIMARY KEY, 
+                    name TEXT NOT NULL, 
+                    _progress INTEGER NOT NULL,
+                    deadline TEXT,
+                    description TEXT,
+                    is_done INTEGER NOT NULL)",
+            [],
+        ).unwrap();
+        Ok(())
+    }
+
+
     pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
         conn.execute(
             "INSERT INTO tasks (
                 name, status, due, scheduled, start_time, end_time, 
-                project, _is_started, _urgent) VALUES (
-                :name, :status, :due, :scheduled, :start_time, :end_time, :project, :_is_started, :_urgent)",
+                project_id, project, _is_started, _urgent) VALUES (
+                :name, :status, :due, :scheduled, :start_time, :end_time, 
+                :project_id, :project, :_is_started, :_urgent)",
             to_params_named_with_fields(task, 
-                &["name", "status", "due", "scheduled", "start_time", "end_time", "project", "_is_started", "_urgent"])
+                &["name", "status", "due", "scheduled", "start_time", 
+                    "end_time","project_id", "project", "_is_started", "_urgent"])
+                .unwrap().to_slice().as_slice()
+        ).unwrap();
+        Ok(())
+    }
+
+    pub fn insert_project(conn: &Connection, project: &Project) -> Result<()> {
+        conn.execute(
+            "INSERT INTO projects(
+                name, _progress, deadline, description, is_done) VALUES ( 
+                :name, :_progress, :deadline, :description, :is_done)",
+            to_params_named_with_fields(project, 
+                &["name", "_progress", "deadline", "description", "is_done"])
                 .unwrap().to_slice().as_slice()
         ).unwrap();
         Ok(())
@@ -69,6 +100,16 @@ pub mod database {
         Ok(tasks)
     }    
 
+    pub fn fetch_project(conn: &Connection) -> Result<Vec<Project>> {
+        let mut stmt = conn.prepare("SELECT * FROM projects").unwrap();
+        let pro = from_rows::<Project>(stmt.query([]).unwrap());
+        let mut projects: Vec<Project> = Vec::new();
+        for i in pro{
+            projects.push(i.unwrap());
+        }
+        Ok(projects)
+    }    
+
     pub fn fetch_task_by_index(conn: &Connection, id: i32) -> Result<Task, ()> {
         let mut stmt = conn.prepare("SELECT * FROM tasks WHERE id=?1").unwrap();
         let mut rows = from_rows::<Task>(stmt.query([id]).unwrap());
@@ -78,25 +119,53 @@ pub mod database {
                 tmp.verify();
                 Ok(tmp)
             },
-            None => Err(())
+            None => Err(()),
         }
-        // let mut tmp = task.next().unwrap().unwrap();
-        // tmp.verify();
-        // Ok(tmp)
+    }
+    
+    pub fn fetch_project_by_index(conn: &Connection, id: i32) -> Result<Project, ()> {
+        let mut stmt = conn.prepare("SELECT * FROM projects WHERE id=?1").unwrap();
+        let mut rows = from_rows::<Project>(stmt.query([id]).unwrap());
+        match rows.next() {
+            Some(pro) => Ok(pro.unwrap()), 
+            None => Err(()),
+        }
     }
 
     pub fn update_task(conn: &Connection, task: &Task) -> Result<()> {
          conn.execute(
             "UPDATE tasks SET name=:name, status=:status, due=:due,
                     scheduled=:scheduled, start_time=:start_time,
-                    end_time=:end_time, project=:project, _is_started=:_is_started, _urgent=:_urgent
+                    end_time=:end_time, project_id=:project_id, project=:project, 
+                    _is_started=:_is_started, _urgent=:_urgent
                     WHERE id=:id",
             to_params_named_with_fields(task, 
                 &["name", "status", "due", "scheduled", "start_time",
-                            "end_time", "project", "_is_started", "_urgent", "id"]
+                            "end_time", "project_id", "project",
+                            "_is_started", "_urgent", "id"]
             ).unwrap().to_slice().as_slice()
         ).unwrap();
         Ok(())
+    }
+    
+    pub fn update_project(conn: &Connection, project: &Project) -> Result<()> {
+         conn.execute(
+            "UPDATE projects SET name=:name, _progress=:_progress, deadline=:deadline,
+                    description=:description, is_done=:is_done
+                    WHERE id=:id",
+            to_params_named_with_fields(project, 
+                &["name", "_progress", "deadline", "description", "is_done"]
+            ).unwrap().to_slice().as_slice()
+        ).unwrap();
+        Ok(())
+    }
+
+    pub fn delete_project(conn: &Connection, id: i32) -> Result<(), ()> {
+        let mut stmt= conn.prepare("DELETE FROM projects WHERE id=?1").unwrap();
+        match stmt.execute([id]) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(()),
+        }
     }
 
     pub fn delete_task(conn: &Connection, id: i32) -> Result<(), ()> {
@@ -108,8 +177,13 @@ pub mod database {
     }
 
     pub fn delete_all(conn: &Connection) -> Result<()> {
-        // conn.execute("DELETE * FROM tasks", []).unwrap();
         let mut stmt= conn.prepare("DELETE FROM tasks").unwrap();
+        stmt.execute([]).unwrap();
+        Ok(())
+    }
+
+    pub fn delete_all_tasks(conn: &Connection) -> Result<()> {
+        let mut stmt= conn.prepare("DELETE FROM projects").unwrap();
         stmt.execute([]).unwrap();
         Ok(())
     }
