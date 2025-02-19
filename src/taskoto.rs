@@ -92,7 +92,7 @@ pub mod taskoto {
                 },
                 Command::Show { id, filter , project, all} => {
                     if project {
-                        command_show_projects(&conn)
+                        command_show_projects(&conn, &mut state_words)
                     } else if !all {
                         command_show(&conn, id, filter, &mut state_words)
                     } else {
@@ -188,6 +188,7 @@ pub mod taskoto {
     fn command_init(conn: &Connection) -> String {
         let _ = create_table(&conn);
         let _ = create_project_table(&conn);
+        let _ = create_trigger(&conn);
         String::from("Database Initialized.")
     }
 
@@ -280,11 +281,14 @@ pub mod taskoto {
 
     }
 
-    fn command_show_projects(conn: &Connection ) -> String {
+    fn command_show_projects(conn: &Connection, state_words: &mut Vec<StateWord> ) -> String {
         let pros= fetch_project(&conn).unwrap();
         if pros.is_empty() {
             String::from("No Match.")
         } else {
+            for _ in &pros {
+                state_words.push(0);
+            }
             Table::new(&pros)
                 .with(Style::empty())
                 .to_string()

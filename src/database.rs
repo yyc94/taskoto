@@ -59,6 +59,21 @@ pub mod database {
         Ok(())
     }
 
+    pub fn create_trigger(conn: &Connection) -> Result<()> {
+        conn.execute(
+            "CREATE TRIGGER update_project_name
+                    AFTER UPDATE OF name ON projects
+                    FOR EACH ROW
+                    BEGIN
+                        UPDATE tasks
+                        SET project = NEW.name
+                        WHERE project_id = OLD.id;
+                    END",
+            [],
+        ).unwrap();
+        Ok(())
+    }
+
 
     pub fn insert_task(conn: &Connection, task: &Task) -> Result<()> {
         conn.execute(
