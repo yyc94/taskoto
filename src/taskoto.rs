@@ -234,6 +234,7 @@ pub mod taskoto {
 
     }
 
+
     fn command_clear(conn: &Connection) -> String {
         println!("WARNING! The operation will clear all data in database! (Y/N)?");
         let mut make_sure = String::new();
@@ -328,12 +329,7 @@ pub mod taskoto {
 
     fn command_show_config() -> String {
         println!("Database directory: {}", &get_database_dir());
-        let date_type = get_date_format();
-        let date_format = if date_type <= 8 {
-            VALID_FORMAT_WITH_Y[date_type - 1]
-        } else {
-            VALID_FORMAT_NO_Y[date_type - 9]
-        };
+        let (_, date_format) = get_date_format();
         println!("Date format: {}", date_format);
         format!("You can change the configuration in {}, or use the config command.", &get_config_dir())
         // String::from("You can change the configuration in {}", CONFIG_DIR)

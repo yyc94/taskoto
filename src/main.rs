@@ -1,12 +1,8 @@
-// TODO: find a way to define "Project"
-// TODO: exceptions handling
-// TODO: 
-
-
 mod taskoto;
 mod task;
 mod database;
 mod parser;
+mod project;
 
 use serde_derive::{Serialize, Deserialize};
 use home;
@@ -17,19 +13,20 @@ use std::{
     io::Write,
 };
 
-// pub const CONFIG_DIR: &str = "/home/fs002905/.taskotorc";
 pub const CONFIG_NAME: &str = "/.taskotorc";
 
 pub const VALID_FORMAT_WITH_Y: [&str; 8] = [
     "%Y-%m-%d", "%m-%d-%Y", "%y-%m-%d", "%m-%d-%y",
     "%B %d, %Y", "%B %d, %y", "%b %d, %Y", "%b %d, %y",
 ]; 
+
 pub const VALID_FORMAT_NO_Y: [&str; 3] = [
     "%m-%d", "%B %d", "%b %d",
 ]; 
 
+pub const DATE_FORMAT: &str = "%Y-%m-%d";
+
 lazy_static! {
-    // pub static ref CONFIG: Mutex<Config> = Mutex::new(Config::init(CONFIG_DIR));
     pub static ref CONFIG: Mutex<Config> = Mutex::new(Config::init(
         &get_config_dir()
     ));
@@ -83,13 +80,13 @@ pub fn get_config_dir() -> String {
 pub fn get_database_dir() -> String {
     CONFIG.lock().unwrap().path.clone()
 }
-pub fn get_date_format() -> usize {
-    CONFIG.lock().unwrap().date_format
-}
-
-// Meaningless function only used for git test
-pub fn what_the_fuck() -> String {
-    String::from("What the fuck!")
+pub fn get_date_format() -> (bool, String) {
+    let format_type = CONFIG.lock().unwrap().date_format;
+    if format_type <= 8 {
+        (false, VALID_FORMAT_WITH_Y[format_type - 1].to_string()) 
+    } else {
+        (true, VALID_FORMAT_NO_Y[format_type - 9].to_string()) 
+    }
 }
 
 

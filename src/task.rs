@@ -14,7 +14,6 @@ pub mod task {
 
     const STORE_PATH: &str = "~/.taskoto/task";
 
-    const DATE_FORMAT: &str = "%Y-%m-%d";
 
 
     type Date = Option<String>;
@@ -97,9 +96,10 @@ pub mod task {
                 _urgent: 1f32,
             }
         }
-        fn set_id(&mut self, id: i32) {
-            self.id = id;
-        }
+
+        // fn set_id(&mut self, id: i32) {
+        //     self.id = id;
+        // }
 
         pub fn set_name(&mut self, name: String) {
             self.name = name;
@@ -232,15 +232,11 @@ pub mod task {
                     },
                     _ => {
                         let mut input = p.clone();
-                        let format_type = get_date_format();
-                        let fmt;
-                        let prefix = String::from("%Y-");
-                        if format_type <= 8 {
-                            fmt = VALID_FORMAT_WITH_Y[format_type - 1].to_string(); 
-                        } else {
-                            fmt = prefix + VALID_FORMAT_NO_Y[format_type - 9]; 
+                        let (flag, mut fmt)= get_date_format();
+                        if flag {
                             let year = Local::now().year().to_string();
                             input = year + "-" + &input;
+                            fmt = String::from("%Y-") + &fmt;
                         }
                         match NaiveDate::parse_from_str(&input, &fmt) {
                             Ok(date) => Some(date.format(DATE_FORMAT).to_string()),
@@ -433,12 +429,7 @@ pub mod task {
         match date {
             Some(p) => {
                 let d = NaiveDate::parse_from_str(p, DATE_FORMAT).unwrap();
-                let format_type = get_date_format();
-                let display_format = if format_type > 8 {
-                    VALID_FORMAT_NO_Y[format_type - 9]
-                } else {
-                    VALID_FORMAT_WITH_Y[format_type - 1]
-                };
+                let (_, display_format) = get_date_format();
                 d.format(&display_format).to_string()
             },
             None => " - ".to_string(),
