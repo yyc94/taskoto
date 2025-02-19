@@ -91,12 +91,20 @@ pub mod taskoto {
                     command_add_project(&conn, name, deadline, description)
                 },
                 Command::Show { id, filter , project, all} => {
-                    if project {
-                        command_show_projects(&conn, &mut state_words)
-                    } else if !all {
-                        command_show(&conn, id, filter, &mut state_words)
+                    if let Some(id) = id {
+                        if !project {
+                            command_show(&conn, Some(id), filter, &mut state_words)
+                        } else {
+                            command_show_task_by_project(&conn, id, &mut state_words)
+                        }
                     } else {
-                        command_show_all(&conn, &mut state_words)
+                        if project {
+                            command_show_projects(&conn, &mut state_words)
+                        } else if !all {
+                            command_show(&conn, id, filter, &mut state_words)
+                        } else {
+                            command_show_all(&conn, &mut state_words)
+                        }
                     }
                 },
                 Command::Modify {
@@ -150,7 +158,7 @@ pub mod taskoto {
                         &conn, id, name, deadline, description)
                 },
                 Command::Clear { project } => {
-                        command_clear(&conn, project)
+                    command_clear(&conn, project)
                 },
             }
         } else {
@@ -217,6 +225,27 @@ pub mod taskoto {
         pro.set_description(description);
         let _ = insert_project(&conn, &pro);
         String::from("Project Added.")
+    }
+    
+    fn command_show_task_by_project(conn: &Connection, project_id: u8, state_words: &mut Vec<StateWord>) -> String {
+        let mut tasks = fetch_task(&conn).unwrap();
+        if tasks.is_empty() {
+            String::from("No Matches.")
+        } else {
+            task::sort_tasks(&mut tasks);
+            Table::new(tasks.iter().filter_map(|task|{
+                if let Some(p_id) = task.project_id {
+                    if p_id == project_id as i32 {
+                        state_words.push(task.get_state_word());
+                        Some(task)
+                    } else {
+                        None
+                    } 
+                } else {
+                    None
+                }
+            })).with(Style::empty()).to_string()
+        }
     }
 
     fn command_show(conn: &Connection, id: Option<u8>, 

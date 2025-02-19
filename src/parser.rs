@@ -69,7 +69,6 @@ pub mod parser {
             description: Option<String>, 
         },
 
-        #[group(multiple = false)]
         #[command(about = "Show the task (id) or all pending tasks")]
         Show {
             id: Option<u8>,

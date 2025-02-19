@@ -1,3 +1,4 @@
+// PERF: optimize the functions about "command_show"
 mod taskoto;
 mod task;
 mod database;
