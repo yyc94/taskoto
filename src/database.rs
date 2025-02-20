@@ -61,7 +61,7 @@ pub mod database {
 
     pub fn create_trigger(conn: &Connection) -> Result<()> {
         conn.execute(
-            "CREATE TRIGGER update_project_name
+            "CREATE TRIGGER IF NOT EXISTS update_project_name
                     AFTER UPDATE OF name ON projects
                     FOR EACH ROW
                     BEGIN

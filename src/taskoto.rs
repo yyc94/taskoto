@@ -89,7 +89,7 @@ pub mod taskoto {
                     if project {
                         Command::show_with_project(&conn, id, filter, &mut state_words)
                     } else {
-                            Command::show(&conn, id, all, filter, &mut state_words, )
+                        Command::show(&conn, id, all, filter, &mut state_words, )
                     }
                     // if let Some(id) = id {
                     //     if !project {
@@ -226,7 +226,7 @@ pub mod taskoto {
     //     let _ = insert_project(&conn, &pro);
     //     String::from("Project Added.")
     // }
-    
+
     // fn command_show_task_by_project(conn: &Connection, project_id: u8, state_words: &mut Vec<StateWord>) -> String {
     //     let mut tasks = fetch_task(&conn).unwrap();
     //     if tasks.is_empty() {

@@ -252,26 +252,26 @@ pub mod parser {
             String::from("Project Added.")
         }
 
-        pub fn show_task_by_project(conn: &Connection, project_id: u8, state_words: &mut Vec<StateWord>) -> String {
-            let mut tasks = fetch_task(&conn).unwrap();
-            if tasks.is_empty() {
-                String::from("No Matches.")
-            } else {
-                task::sort_tasks(&mut tasks);
-                Table::new(tasks.iter().filter_map(|task|{
-                    if let Some(p_id) = task.project_id {
-                        if p_id == project_id as i32 {
-                            state_words.push(task.get_state_word());
-                            Some(task)
-                        } else {
-                            None
-                        } 
-                    } else {
-                        None
-                    }
-                })).with(Style::empty()).to_string()
-            }
-        }
+        // pub fn show_task_by_project(conn: &Connection, project_id: u8, state_words: &mut Vec<StateWord>) -> String {
+        //     let mut tasks = fetch_task(&conn).unwrap();
+        //     if tasks.is_empty() {
+        //         String::from("No Matches.")
+        //     } else {
+        //         task::sort_tasks(&mut tasks);
+        //         Table::new(tasks.iter().filter_map(|task|{
+        //             if let Some(p_id) = task.project_id {
+        //                 if p_id == project_id as i32 {
+        //                     state_words.push(task.get_state_word());
+        //                     Some(task)
+        //                 } else {
+        //                     None
+        //                 } 
+        //             } else {
+        //                 None
+        //             }
+        //         })).with(Style::empty()).to_string()
+        //     }
+        // }
 
         pub fn show(conn: &Connection, id: Option<u8>, a: bool, 
             filter: Option<Filter>, state_words: &mut Vec<StateWord>) -> String {
@@ -288,7 +288,6 @@ pub mod parser {
                         String::from("No Matches.")
                     }
                 }
-                // res = Table::new(&vec![task]).to_string();
             } else if !a {
                 let mut tasks = fetch_task(&conn).unwrap();
                 if tasks.is_empty() {
@@ -372,36 +371,34 @@ pub mod parser {
             }
         }
 
-        pub fn show_all(conn: &Connection, state_words: &mut Vec<StateWord>) -> String {
-            let mut tasks = fetch_task(&conn).unwrap();
-            if tasks.is_empty() {
-                String::from("No Match.")
-            } else {
-                task::sort_tasks(&mut tasks);
-                for task in &tasks {
-                    state_words.push(task.get_state_word());
-                }
-                Table::new(&tasks)
-                    .with(Style::empty())
-                    .to_string()
-            }
+        // pub fn show_all(conn: &Connection, state_words: &mut Vec<StateWord>) -> String {
+        //     let mut tasks = fetch_task(&conn).unwrap();
+        //     if tasks.is_empty() {
+        //         String::from("No Match.")
+        //     } else {
+        //         task::sort_tasks(&mut tasks);
+        //         for task in &tasks {
+        //             state_words.push(task.get_state_word());
+        //         }
+        //         Table::new(&tasks)
+        //             .with(Style::empty())
+        //             .to_string()
+        //     }
+        // }
 
-        }
-
-        pub fn show_projects(conn: &Connection, state_words: &mut Vec<StateWord> ) -> String {
-            let pros= fetch_project(&conn).unwrap();
-            if pros.is_empty() {
-                String::from("No Match.")
-            } else {
-                for _ in &pros {
-                    state_words.push(0);
-                }
-                Table::new(&pros)
-                    .with(Style::empty())
-                    .to_string()
-            }
-
-        }
+        // pub fn show_projects(conn: &Connection, state_words: &mut Vec<StateWord> ) -> String {
+        //     let pros= fetch_project(&conn).unwrap();
+        //     if pros.is_empty() {
+        //         String::from("No Match.")
+        //     } else {
+        //         for _ in &pros {
+        //             state_words.push(0);
+        //         }
+        //         Table::new(&pros)
+        //             .with(Style::empty())
+        //             .to_string()
+        //     }
+        // }
 
 
         pub fn clear(conn: &Connection, project: bool) -> String {
