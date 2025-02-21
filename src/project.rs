@@ -11,7 +11,7 @@ pub mod project {
         pub id: i32,
         pub name: String,
         deadline: Option<String>,
-        description: Option<String>,
+        pub description: Option<String>,
         is_done: bool,
     }
 
