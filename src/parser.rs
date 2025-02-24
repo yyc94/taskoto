@@ -76,7 +76,10 @@ pub mod parser {
             #[arg(long)]
             description: Option<String>, 
         },
-
+        #[command(about = "Show descriptions of the project (id)")]
+        ShowDetail {
+            id: u8,
+        },
         #[command(about = "Show the task (id) or all pending tasks")]
         Show {
             id: Option<u8>,
@@ -371,34 +374,6 @@ pub mod parser {
             }
         }
 
-        // pub fn show_all(conn: &Connection, state_words: &mut Vec<StateWord>) -> String {
-        //     let mut tasks = fetch_task(&conn).unwrap();
-        //     if tasks.is_empty() {
-        //         String::from("No Match.")
-        //     } else {
-        //         task::sort_tasks(&mut tasks);
-        //         for task in &tasks {
-        //             state_words.push(task.get_state_word());
-        //         }
-        //         Table::new(&tasks)
-        //             .with(Style::empty())
-        //             .to_string()
-        //     }
-        // }
-
-        // pub fn show_projects(conn: &Connection, state_words: &mut Vec<StateWord> ) -> String {
-        //     let pros= fetch_project(&conn).unwrap();
-        //     if pros.is_empty() {
-        //         String::from("No Match.")
-        //     } else {
-        //         for _ in &pros {
-        //             state_words.push(0);
-        //         }
-        //         Table::new(&pros)
-        //             .with(Style::empty())
-        //             .to_string()
-        //     }
-        // }
 
 
         pub fn clear(conn: &Connection, project: bool) -> String {
@@ -553,6 +528,18 @@ pub mod parser {
                 Err(_) => String::from("No Matches."),
             }
 
+        }
+
+        pub fn show_details(conn: &Connection, id: u8) -> String {
+            match fetch_project_by_index(conn, id as i32) {
+                Ok(pro) => {
+                    match pro.description {
+                        Some(details) => details,
+                        None => String::from("No Description."),
+                    }
+                },
+                Err(_) => String::from("No Matches.")
+            }
         }
     }
 }

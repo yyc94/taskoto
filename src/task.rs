@@ -473,7 +473,7 @@ pub mod task {
             let scheduled = Cow::from(get_date(&self.scheduled));
             let project = Cow::from(
                 if let Some(id) = self.project_id {
-                    self.project.clone().unwrap() + "(" + &id.to_string() + ")"
+                    format!("[{}]{}", id, self.project.clone().unwrap())
                 } else {
                     "-".to_string()
                 }

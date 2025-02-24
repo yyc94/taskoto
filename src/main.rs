@@ -44,7 +44,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            path: String::from(&get_config_dir()),
+            path: String::from(home::home_dir().unwrap().to_string_lossy()) + "/.taskoto",  
             date_format: 1, 
         }
     }
